@@ -64,10 +64,10 @@ Table `{prefix}tbtp_ledger`, created by `dbDelta` on activation and from a `plug
 | `id` | bigint unsigned PK | |
 | `user_id` | bigint unsigned | the student |
 | `points` | int (signed) | + earned, − taken/spent |
-| `kind` | varchar(16) | `earn`, `day`, `adjust` now; `hold`, `spend`, `release` reserved for 0.2.0 |
-| `activity_id` | bigint unsigned NULL | Notes activity row ID for `earn` and `day` |
-| `tool` | varchar(32) | for `earn`; '' otherwise |
-| `object_ref` | varchar(64) | for `earn`; '' otherwise |
+| `kind` | varchar(16) | `earn` (first time), `repeat`, `day`, `adjust` now; `hold`, `spend`, `release` reserved for 0.2.0 |
+| `activity_id` | bigint unsigned NULL | Notes activity row ID for `earn`, `repeat` and `day` |
+| `tool` | varchar(32) | for `earn` and `repeat`; '' otherwise |
+| `object_ref` | varchar(64) | for `earn` and `repeat`; '' otherwise |
 | `title` | varchar(190) | what the student sees, e.g. the activity title |
 | `detail` | varchar(190) | e.g. `18 / 20`, `340 game points`, `again`, a teacher's reason |
 | `created_by` | bigint unsigned | 0 = automatic; the teacher's ID for `adjust` |
@@ -87,7 +87,7 @@ unknown:    5            (a tool slug not in the list)
 bonus:      5 points at 80 % or more   (only rows with score and score_max > 0)
 repeat:     1 point, at most once a day per activity
 day:        2 points for the first activity of the day
-daily_cap:  50           (earn + day only; teachers' adjustments don't count)
+daily_cap:  50           (earn + repeat + day only; teachers' adjustments don't count)
 start:      the date the plugin is first activated (site time zone)
 ```
 
@@ -113,13 +113,15 @@ On `tbt_notes_activity_recorded( $id, $row )`:
 
 1. Ignore when: the user is a teacher/admin (`TBT_Notes_Capabilities::user_can_manage()`), or the row's `created_at` is before `start` (midnight, site time zone), or Points' table is missing.
 2. Work out the inputs from the ledger (site-time-zone "today"):
-   - `is_first`: no earlier `earn` row for this user + tool + object_ref.
-   - `repeat_today`: an `earn` row for this activity today already exists.
+   - `is_first`: no earlier `earn` or `repeat` row for this user + tool + object_ref.
+   - `repeat_today`: a `repeat` row for this user + tool + object_ref already exists today (the first-time `earn` row does not count).
    - `day_given`: a `day` row for this user today exists.
-   - `earned_today`: sum of today's `earn` + `day` points for this user.
+   - "Today" is the day of the row's `created_at` in the site time zone, and ledger rows are stored with that same `created_at` (identical for live rows; correct for backdated ones).
+   - The teacher check in step 1 looks at `$row['user_id']`, never the current user: homework is recorded inside the teacher's request.
+   - `earned_today`: sum of today's `earn` + `repeat` + `day` points for this user.
    - `percent`: `round(score / score_max * 100)` when both set and `score_max` > 0, else null.
 3. `TBTP_Rules::award()`.
-4. Insert an `earn` row when `earn` > 0, and a `day` row when `day` > 0, both with `activity_id` = `$id`. `title` = `object_title`. `detail`: `18 / 20` for scored rows, `340 game points` for `fill`, `again` for repeats (`again · 18 / 20` when both).
+4. Insert the points row when `earn` > 0 — kind `earn` the first time, `repeat` otherwise — and a `day` row when `day` > 0, both with `activity_id` = `$id`. `title` = `object_title`. `detail`: `18 / 20` for scored rows, `340 game points` for `fill`, `again` for repeats (`again · 18 / 20` when both).
 5. A duplicate-key error (same activity twice) is ignored silently. **Any failure is swallowed**: earning must never break the student's request in Notes.
 
 ## Task 4 — Who sees what (`class-tbtp-access.php`)
