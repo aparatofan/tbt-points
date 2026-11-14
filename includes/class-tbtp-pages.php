@@ -155,10 +155,11 @@ class TBTP_Pages {
 		self::enqueue_styles();
 
 		if ( ! self::ready() ) {
-			return self::wrap( self::line( __( 'Points need TBT Notes 1.22.0 or later.', 'tbt-points' ) ) );
+			return self::wrap( 'teacher', self::line( __( 'Points need TBT Notes 1.22.0 or later.', 'tbt-points' ) ) );
 		}
 		if ( ! is_user_logged_in() ) {
 			return self::wrap(
+				'teacher',
 				self::login_card(
 					__( 'Log in to see points', 'tbt-points' ),
 					__( 'Points are for TBT teachers. Log in and they open straight away.', 'tbt-points' )
@@ -166,7 +167,7 @@ class TBTP_Pages {
 			);
 		}
 		if ( ! TBTP_Access::is_teacher( get_current_user_id() ) ) {
-			return self::wrap( self::line( __( 'This page is for teachers.', 'tbt-points' ) ) );
+			return self::wrap( 'teacher', self::line( __( 'This page is for teachers.', 'tbt-points' ) ) );
 		}
 
 		self::enqueue_app( 'teacher' );
@@ -182,10 +183,11 @@ class TBTP_Pages {
 		self::enqueue_styles();
 
 		if ( ! self::ready() ) {
-			return self::wrap( self::line( __( 'Points need TBT Notes 1.22.0 or later.', 'tbt-points' ) ) );
+			return self::wrap( 'student', self::line( __( 'Points need TBT Notes 1.22.0 or later.', 'tbt-points' ) ) );
 		}
 		if ( ! is_user_logged_in() ) {
 			return self::wrap(
+				'student',
 				self::login_card(
 					__( 'Log in to see your points', 'tbt-points' ),
 					__( 'Everything you earn on The Blue Tree is here. Log in and it opens straight away.', 'tbt-points' )
@@ -193,7 +195,7 @@ class TBTP_Pages {
 			);
 		}
 		if ( TBTP_Access::is_teacher( get_current_user_id() ) ) {
-			return self::wrap( self::line( __( "This page shows a student's own points.", 'tbt-points' ) ) );
+			return self::wrap( 'student', self::line( __( "This page shows a student's own points.", 'tbt-points' ) ) );
 		}
 
 		self::enqueue_app( 'student' );
@@ -210,7 +212,7 @@ class TBTP_Pages {
 	 */
 	private static function app( $mode ) {
 		return sprintf(
-			'<div class="tbtp tbtp--%1$s" data-tbtp-app="%1$s"><p class="tbtp-loading" role="status">%2$s</p><noscript><p class="tbtp-muted">%3$s</p></noscript></div>',
+			'<div id="tbtp-app-%1$s" class="tbtp tbtp--%1$s" data-tbtp-app="%1$s"><p class="tbtp-loading" role="status">%2$s</p><noscript><p class="tbtp-muted">%3$s</p></noscript></div>',
 			esc_attr( $mode ),
 			esc_html__( 'Loading points…', 'tbt-points' ),
 			esc_html__( 'Points need JavaScript. Turn it on and reload the page.', 'tbt-points' )
@@ -218,11 +220,16 @@ class TBTP_Pages {
 	}
 
 	/**
+	 * The wrapper for a message or the login card. It carries the same ID as
+	 * the app would, so its heading is pinned by the same rules; only one of
+	 * the two is ever on the page.
+	 *
+	 * @param string $mode  'teacher' or 'student'.
 	 * @param string $inner Markup.
 	 * @return string
 	 */
-	private static function wrap( $inner ) {
-		return '<div class="tbtp">' . $inner . '</div>';
+	private static function wrap( $mode, $inner ) {
+		return '<div id="tbtp-app-' . esc_attr( $mode ) . '" class="tbtp">' . $inner . '</div>';
 	}
 
 	/**
