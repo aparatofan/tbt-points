@@ -6,6 +6,8 @@
  *   (none)                 Students tab
  *   tbtp_student={id}      one student's history ("← All students")
  *   tbtp_tab=rules         Rules tab (administrators)
+ *   tbtp_q={text}          the Students search; kept while a student's
+ *                          history is open, so "← All students" returns to it
  *
  * All data comes from tbt-points/v1; every visibility decision is made on
  * the server. Plain JS, no build step, no dependencies.
@@ -21,7 +23,7 @@
 
 	var MODE = CFG.mode === 'teacher' ? 'teacher' : 'student';
 	var IS_ADMIN = !! CFG.isAdmin;
-	var P = { tab: 'tbtp_tab', student: 'tbtp_student' };
+	var P = { tab: 'tbtp_tab', student: 'tbtp_student', q: 'tbtp_q' };
 	var TOOL_ORDER = [ 'test', 'homework', 'swipe', 'matching', 'dragdrop', 'drill', 'fill' ];
 	var TOOL_NOTES = {
 		homework: 'When you save a score',
@@ -142,6 +144,26 @@
 			'<span class="tbtp-abar__line" aria-hidden="true"></span>' + ( extra || '' ) + '</div>';
 	}
 
+	var SEARCH_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>';
+
+	/** The search box, as TBT Results draws it. */
+	function searchBox( placeholder, value ) {
+		return '<div class="tbtp-search">' + SEARCH_ICON +
+			'<label class="tbtp-sr" for="tbtp-q">' + esc( placeholder ) + '</label>' +
+			'<input id="tbtp-q" type="search" placeholder="' + esc( placeholder ) + '" value="' + esc( value ) + '" autocomplete="off" maxlength="100">' +
+			'<button type="button" class="tbtp-search__clear" data-tbtp="clear" aria-label="Clear the search"' + ( value ? '' : ' hidden' ) + '>×</button>' +
+		'</div>';
+	}
+
+	/**
+	 * Text for matching: lower case, without accents. NFD splits most Polish
+	 * letters into a base letter and a mark; ł has no decomposition, so it is
+	 * mapped by hand.
+	 */
+	function fold( value ) {
+		return String( value == null ? '' : value ).toLowerCase().normalize( 'NFD' ).replace( /[\u0300-\u036f]/g, '' ).replace( /ł/g, 'l' );
+	}
+
 	function stat( value, label, big ) {
 		return '<div class="tbtp-stat' + ( big ? ' tbtp-stat--big' : '' ) + '"><div class="tbtp-stat__v">' + esc( value ) +
 			'</div><div class="tbtp-stat__k">' + esc( label ) + '</div></div>';
@@ -260,20 +282,39 @@
 		var q = new URLSearchParams( window.location.search );
 		var sid = parseInt( q.get( P.student ) || '', 10 );
 		var tab = IS_ADMIN && q.get( P.tab ) === 'rules' ? 'rules' : 'students';
-		return { tab: tab, student: tab === 'students' && sid > 0 ? sid : 0 };
+		return {
+			tab: tab,
+			student: tab === 'students' && sid > 0 ? sid : 0,
+			q: tab === 'students' ? ( q.get( P.q ) || '' ).trim().slice( 0, 100 ) : '',
+		};
 	}
 
-	function go( st ) {
+	/**
+	 * Write a view to the URL. A new view adds a history entry; a search
+	 * change replaces the current one.
+	 */
+	function go( st, replace ) {
 		var q = new URLSearchParams( window.location.search );
 		q.delete( P.tab );
 		q.delete( P.student );
+		q.delete( P.q );
 		if ( st.tab === 'rules' ) {
 			q.set( P.tab, 'rules' );
-		} else if ( st.student ) {
-			q.set( P.student, String( st.student ) );
+		} else {
+			if ( st.student ) {
+				q.set( P.student, String( st.student ) );
+			}
+			if ( st.q ) {
+				q.set( P.q, st.q );
+			}
 		}
 		var s = q.toString();
-		window.history.pushState( null, '', window.location.pathname + ( s ? '?' + s : '' ) + window.location.hash );
+		var url = window.location.pathname + ( s ? '?' + s : '' ) + window.location.hash;
+		if ( replace ) {
+			window.history.replaceState( null, '', url );
+		} else {
+			window.history.pushState( null, '', url );
+		}
 	}
 
 	function tabs( current ) {
@@ -291,12 +332,20 @@
 		students: [],
 		open: 0,        // student whose "Give or take points" row is open
 		history: null,  // History for the one-student view
+		loaded: false,  // the Students list has arrived
+		urlTimer: 0,    // the search reaches the URL 300 ms after typing stops
 	};
 
 	function teacherPage() {
+		clearTimeout( T.urlTimer );
+		T.urlTimer = 0;
 		T.st = readState();
 		T.open = 0;
-		root.innerHTML = adminBar( 'Points', tabs( T.st.tab ) ) + '<div data-slot="body"><p class="tbtp-loading" role="status">Loading points…</p></div>';
+		T.loaded = false;
+		// The search belongs to the Students list only: not Rules, not one
+		// student's history.
+		var search = T.st.tab === 'students' && ! T.st.student ? searchBox( 'Search a student…', T.st.q ) : '';
+		root.innerHTML = adminBar( 'Points', search + tabs( T.st.tab ) ) + '<div data-slot="body"><p class="tbtp-loading" role="status">Loading points…</p></div>';
 		if ( T.st.tab === 'rules' ) {
 			loadRules();
 		} else if ( T.st.student ) {
@@ -315,13 +364,15 @@
 	function loadStudents() {
 		api( 'teacher/students' ).then( function ( data ) {
 			T.students = data.students || [];
+			T.loaded = true;
 			var s = data.stats || {};
 			body(
 				'<div class="tbtp-stats">' +
 					stat( num( s.earned_30 ), 'points earned in the last 30 days' ) +
 					stat( ( s.earning || 0 ) + ' of ' + ( s.of || 0 ), 'students earning' ) +
 				'</div>' +
-				'<section class="tbtp-stage"><h2 class="tbtp-stage__title">Students</h2><div data-slot="students"></div>' +
+				'<section class="tbtp-stage"><div class="tbtp-stage__head"><h2 class="tbtp-stage__title">Students</h2>' +
+					'<p class="tbtp-summary" data-slot="count" aria-live="polite"></p></div><div data-slot="students"></div>' +
 				'<p class="tbtp-note">Use a minus number to take points away (e.g. −20). The student sees the reason in their history. Each student\'s full history opens from their name.</p>' +
 				'</section>'
 			);
@@ -331,18 +382,78 @@
 		} );
 	}
 
+	/** The students the search leaves: name or class title, accents ignored. */
+	function shownStudents() {
+		var needle = fold( T.st.q.trim() );
+		if ( ! needle ) {
+			return T.students;
+		}
+		return T.students.filter( function ( s ) {
+			return fold( s.name ).indexOf( needle ) >= 0 || fold( s.class_title ).indexOf( needle ) >= 0;
+		} );
+	}
+
 	function paintStudents() {
 		var el = $( '[data-slot="students"]' );
+		var count = $( '[data-slot="count"]' );
 		if ( ! el ) {
 			return;
+		}
+		var shown = shownStudents();
+		var searching = T.st.q.trim() !== '';
+		if ( count ) {
+			count.textContent = searching ? shown.length + ' of ' + T.students.length + ' ' + ( T.students.length === 1 ? 'student' : 'students' ) : '';
 		}
 		if ( ! T.students.length ) {
 			el.innerHTML = '<p class="tbtp-empty">No students yet. Students appear here once they are in one of your classes in TBT Notes.</p>';
 			return;
 		}
+		if ( ! shown.length ) {
+			el.innerHTML = '<p class="tbtp-empty">No student matches “' + esc( T.st.q.trim() ) + '”.</p>';
+			return;
+		}
 		el.innerHTML = '<div class="tbtp-table-wrap"><table class="tbtp-table"><thead><tr>' +
 			'<th scope="col">Student</th><th scope="col">Class</th><th scope="col">Balance</th><th scope="col">Last 30 days</th><th scope="col">Last earned</th><th scope="col"><span class="tbtp-sr">Actions</span></th>' +
-			'</tr></thead><tbody>' + T.students.map( studentRow ).join( '' ) + '</tbody></table></div>';
+			'</tr></thead><tbody>' + shown.map( studentRow ).join( '' ) + '</tbody></table></div>';
+	}
+
+	/** Filter now; write the URL once typing has stopped for 300 ms. */
+	function setSearch( value, now ) {
+		T.st.q = value.trim().slice( 0, 100 );
+		var clear = $( '[data-tbtp="clear"]' );
+		if ( clear ) {
+			clear.hidden = ! value;
+		}
+		paintStudents();
+		clearTimeout( T.urlTimer );
+		T.urlTimer = 0;
+		if ( now ) {
+			go( T.st, true );
+		} else {
+			T.urlTimer = setTimeout( function () {
+				T.urlTimer = 0;
+				go( T.st, true );
+			}, 300 );
+		}
+	}
+
+	/**
+	 * Write a search still waiting for its 300 ms to the current entry, so
+	 * Back from the next view returns to the filtered list.
+	 */
+	function flushSearch() {
+		if ( T.urlTimer ) {
+			clearTimeout( T.urlTimer );
+			T.urlTimer = 0;
+			go( T.st, true );
+		}
+	}
+
+	function openStudent( id ) {
+		flushSearch();
+		go( { tab: 'students', student: id, q: T.st.q } );
+		teacherPage();
+		window.scrollTo( 0, root.getBoundingClientRect().top + window.pageYOffset - 24 );
 	}
 
 	function studentRow( s ) {
@@ -439,7 +550,7 @@
 			var s = data.student || {};
 			body(
 				'<button type="button" class="tbtp-back" data-tbtp="home">← All students</button>' +
-				'<div class="tbtp-rhead"><h2>' + esc( s.name ) + '</h2>' +
+				'<div class="tbtp-rhead"><h2 class="tbtp-rhead__title">' + esc( s.name ) + '</h2>' +
 					'<p class="tbtp-muted">' + ( s.class_title ? esc( s.class_title ) + ' · ' : '' ) + esc( num( s.balance ) ) + ' points</p></div>' +
 				'<section class="tbtp-stage"><h2 class="tbtp-stage__title">History</h2><div data-slot="history"></div></section>'
 			);
@@ -574,15 +685,21 @@
 			var act = t.getAttribute( 'data-tbtp' );
 			var id = parseInt( t.getAttribute( 'data-id' ) || '', 10 );
 			if ( act === 'tab' ) {
-				go( { tab: t.getAttribute( 'data-tab' ), student: 0 } );
+				flushSearch();
+				go( { tab: t.getAttribute( 'data-tab' ), student: 0, q: T.st.q } );
 				teacherPage();
 			} else if ( act === 'student' ) {
-				go( { tab: 'students', student: id } );
-				teacherPage();
-				window.scrollTo( 0, root.getBoundingClientRect().top + window.pageYOffset - 24 );
+				openStudent( id );
 			} else if ( act === 'home' ) {
-				go( { tab: 'students', student: 0 } );
+				go( { tab: 'students', student: 0, q: T.st.q } );
 				teacherPage();
+			} else if ( act === 'clear' ) {
+				var box = $( '#tbtp-q' );
+				if ( box ) {
+					box.value = '';
+					box.focus();
+				}
+				setSearch( '', true );
 			} else if ( act === 'adjust' ) {
 				T.open = T.open === id ? 0 : id;
 				paintStudents();
@@ -616,7 +733,26 @@
 			}
 		} );
 
+		root.addEventListener( 'input', function ( e ) {
+			if ( e.target.id === 'tbtp-q' ) {
+				setSearch( e.target.value, false );
+			}
+		} );
+
 		root.addEventListener( 'keydown', function ( e ) {
+			if ( e.target.id === 'tbtp-q' ) {
+				if ( e.key === 'Escape' && e.target.value ) {
+					e.target.value = '';
+					setSearch( '', true );
+				} else if ( e.key === 'Enter' ) {
+					e.preventDefault();
+					var shown = T.loaded ? shownStudents() : [];
+					if ( T.st.q && shown.length === 1 ) {
+						openStudent( shown[ 0 ].id );
+					}
+				}
+				return;
+			}
 			if ( e.key === 'Escape' && T.open && e.target.closest( '[data-tbtp-form="adjust"]' ) ) {
 				var cancel = $( '[data-tbtp="cancel"]' );
 				if ( cancel ) {
