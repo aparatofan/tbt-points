@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TBT Points — prototype</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Slab:wght@400;600;700&display=swap">
+<style>
+/* Tokens as in the Test Maker / Results prototypes. */
+:root{
+  --tbt-blue:#0856C9; --tbt-blue-dark:#063F94;
+  --tbt-canvas:#F6F8FC; --tbt-surface:#FFFFFF; --tbt-input:#F0F5FE; --tbt-selected-bg:#EDF4FF;
+  --tbt-border:#D8E3F0; --tbt-ink:#1F2937; --tbt-muted:#667085; --tbt-faint:#8299B8;
+  --tbt-success:#16803C; --tbt-success-bg:#ECFDF3; --tbt-error:#C62828; --tbt-error-bg:#FFF1F1;
+  --tbt-warn:#9A6700; --tbt-warn-bg:#FFF8E1;
+  --tbt-shadow:0 6px 20px rgba(24,56,96,.07); --tbt-focus-ring:0 0 0 3px rgba(8,86,201,.18);
+  --ui:"Roboto",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; --content:"Roboto Slab",Georgia,serif;
+}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;min-width:768px;background:var(--tbt-canvas);color:var(--tbt-ink);font:400 16px/1.5 var(--ui);padding:16px 16px 64px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+button,select,input{font:inherit}button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--tbt-focus-ring)}
+h1,h2,h3,p{margin:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.proto{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;font-size:14px;color:var(--tbt-muted);border:1px dashed var(--tbt-border);border-radius:12px;padding:8px 16px;background:var(--tbt-surface)}
+.proto b{color:var(--tbt-ink);font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--tbt-border);border-radius:12px;overflow:hidden;background:var(--tbt-surface)}
+.seg button{border:0;background:none;padding:8px 16px;color:var(--tbt-muted);font-weight:500}
+.seg button[aria-pressed=true]{background:var(--tbt-selected-bg);color:var(--tbt-blue-dark);font-weight:600}
+.abar{display:flex;align-items:center;gap:10px}
+.abar .title{min-width:234px;font:700 28px/1.2 var(--content);color:var(--tbt-blue);letter-spacing:-.01em}
+.abar .line{flex:1;height:1px;background:var(--tbt-border)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px}
+.stat{background:var(--tbt-surface);border:1px solid var(--tbt-border);border-radius:16px;padding:16px 24px}
+.stat .v{font:700 28px/1.2 var(--content);font-variant-numeric:tabular-nums}
+.stat .k{font-size:14px;color:var(--tbt-muted)}
+.stat.big{background:linear-gradient(135deg,var(--tbt-blue),var(--tbt-blue-dark));border:0;color:#fff}
+.stat.big .v{font-size:40px}.stat.big .k{color:rgba(255,255,255,.82)}
+.stage{background:var(--tbt-surface);border:1px solid var(--tbt-border);border-radius:22px;box-shadow:var(--tbt-shadow);padding:32px 40px;display:flex;flex-direction:column;gap:20px}
+.stage h2{font:700 22px/1.25 var(--content)}
+.sub{color:var(--tbt-muted);font-size:15px;margin-top:-12px}
+.btn{height:40px;padding:0 20px;border-radius:999px;border:0;background:var(--tbt-blue);color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:14px}
+.btn:hover{background:var(--tbt-blue-dark)}
+.btn[disabled]{background:var(--tbt-input);color:var(--tbt-faint);cursor:default}
+.btn2{height:36px;padding:0 14px;border-radius:12px;border:1px solid var(--tbt-border);background:var(--tbt-surface);color:var(--tbt-blue-dark);font-weight:600;font-size:14px}
+.btn2:hover{background:var(--tbt-selected-bg)}
+.btn2.no{color:var(--tbt-error)}
+.lnk{border:0;background:none;padding:0;color:inherit;font:inherit;text-align:left;font-weight:600}
+.lnk:hover{color:var(--tbt-blue);text-decoration:underline}
+table.rt{width:100%;border-collapse:collapse}
+.rt th{text-align:left;font-size:13px;font-weight:600;color:var(--tbt-muted);text-transform:uppercase;letter-spacing:.06em;padding:0 12px 10px;border-bottom:1px solid var(--tbt-border)}
+.rt td{padding:12px;border-bottom:1px solid var(--tbt-border);vertical-align:middle}
+.rt tr:last-child td{border-bottom:0}
+.muted{color:var(--tbt-muted);font-size:14px}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.plus{color:var(--tbt-success);font-weight:600}.minus{color:var(--tbt-error);font-weight:600}
+.pill{display:inline-block;font:600 13px/1 var(--ui);padding:6px 10px;border-radius:999px;white-space:nowrap}
+.pill.wait{background:var(--tbt-warn-bg);color:var(--tbt-warn)}
+.pill.ok{background:var(--tbt-success-bg);color:var(--tbt-success)}
+.pill.no{background:var(--tbt-input);color:var(--tbt-muted)}
+.tool{display:inline-block;font:500 12px/1 var(--ui);padding:5px 9px;border-radius:999px;background:var(--tbt-input);color:var(--tbt-blue-dark)}
+.rewards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.rw{border:1px solid var(--tbt-border);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:10px}
+.rw .pic{height:96px;border-radius:12px;background:var(--tbt-input);display:grid;place-items:center;font-size:40px}
+.rw h3{font:700 18px/1.3 var(--content)}
+.rw .price{font:700 20px/1 var(--content);color:var(--tbt-blue)}
+.rw .need{font-size:13px;color:var(--tbt-muted)}
+.bar{height:8px;border-radius:999px;background:var(--tbt-input);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--tbt-blue)}
+.confirm{border:1px solid var(--tbt-blue);background:var(--tbt-selected-bg);border-radius:12px;padding:10px 12px;font-size:14px;display:flex;flex-direction:column;gap:8px}
+.confirm div{display:flex;gap:8px}
+.inp{height:36px;border:1px solid transparent;border-radius:10px;background:var(--tbt-input);padding:0 10px;color:var(--tbt-ink);width:100%}
+.inp.n{width:84px;text-align:right}
+.inp:focus{background:#fff;border-color:var(--tbt-blue);outline:none}
+.adjust{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--tbt-canvas);border-radius:14px;padding:12px 16px}
+.note{font-size:14px;color:var(--tbt-muted);border-left:3px solid var(--tbt-border);padding-left:12px}
+.toggle{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--tbt-muted)}
+</style>
+
+<div class="wrap">
+  <div class="proto">
+    <b>Prototype</b> · View as
+    <div class="seg" role="group" aria-label="View as">
+      <button type="button" data-mode="student" aria-pressed="true">Student (Kat)</button>
+      <button type="button" data-mode="teacher" aria-pressed="false">Teacher (you)</button>
+    </div>
+    <span>Sample data and sample numbers: every number is a setting on the Rules tab. No page header: Divi supplies it.</span>
+  </div>
+  <main id="app"></main>
+</div>
+
+<script>
+const TOOLS = {test:"Test", homework:"Homework", swipe:"Swipe", matching:"Matching Game", dragdrop:"Drag & Drop", drill:"Translation Drill", fill:"Fill"};
+const RULES = {
+  tools:{test:10, homework:15, swipe:5, matching:5, dragdrop:5, drill:5, fill:5},
+  bonusAt:80, bonus:5, repeat:1, activeDay:2, dailyCap:50, start:"2026-11-17"
+};
+let REWARDS = [
+  {id:1, icon:"👕", name:"TBT polo shirt", price:600, stock:12, on:true},
+  {id:2, icon:"🧢", name:"TBT cap", price:350, stock:20, on:true},
+  {id:3, icon:"📁", name:"TBT folder", price:150, stock:30, on:true},
+  {id:4, icon:"📘", name:"Boost Your Matura (book)", price:500, stock:8, on:true},
+  {id:5, icon:"🎓", name:"Private lesson (45 min)", price:1500, stock:null, on:true}];
+const STUDENTS = [
+  {id:4,name:"Kat Zielińska",cls:"Matura 2027",bal:412,d30:286,last:"Today"},
+  {id:1,name:"Alita Nowak",cls:"E4P1",bal:655,d30:340,last:"Today"},
+  {id:2,name:"Pete Wiśniewski",cls:"E4P1",bal:120,d30:95,last:"Yesterday"},
+  {id:3,name:"Sven Kowalczyk",cls:"E4P1",bal:38,d30:38,last:"9 Nov"},
+  {id:5,name:"Kasia Lewandowska",cls:"Psychologists B2",bal:1540,d30:410,last:"Today"},
+  {id:7,name:"Ola Mazur",cls:"Matura 2027",bal:0,d30:0,last:"–"}];
+let REQUESTS = [
+  {id:1,sid:1,rid:2,when:"Today 09:14",state:"wait"},
+  {id:2,sid:5,rid:5,when:"Yesterday 18:02",state:"wait"},
+  {id:3,sid:4,rid:3,when:"3 Nov",state:"ok"}];
+const HISTORY = [
+  ["Today 08:40","Test","Past Simple or Present Perfect? · 18 / 20",10+5],
+  ["Today 08:40","Bonus","First activity today",2],
+  ["Yesterday 19:12","Homework","An email to a hotel · 8 / 10",15+5],
+  ["Yesterday 18:55","Swipe","Phrasal verbs with GET",5],
+  ["Yesterday 18:58","Swipe","Phrasal verbs with GET (again)",1],
+  ["Yesterday 18:50","Bonus","First activity today",2],
+  ["12 Nov","Fill","Travel phrases · 340 game points",5],
+  ["12 Nov","From your teacher","Great speaking in class 🙂",20],
+  ["3 Nov","Reward","TBT folder (handed over)",-150]];
+
+const st = {mode:"student", tab:"requests", ask:null, open:null, myReq:[{rid:3,state:"ok",when:"3 Nov"}]};
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const rw = id => REWARDS.find(r=>r.id===id), stu = id => STUDENTS.find(s=>s.id===id);
+const held = () => st.myReq.filter(r=>r.state==="wait").reduce((t,r)=>t+rw(r.rid).price,0);
+const kat = () => stu(4);
+const pts = n => `${n.toLocaleString("en-GB")} pts`;
+
+/* ---------- student ---------- */
+function student(){
+  const avail = kat().bal - held();
+  return `
+  <div class="abar"><h2 class="title">My points</h2><span class="line"></span></div>
+  <div class="stats" style="margin-top:24px">
+    <div class="stat big"><div class="v">${avail}</div><div class="k">points to spend</div></div>
+    <div class="stat"><div class="v">+${HISTORY.filter(h=>/Today|Yesterday/.test(h[0])&&h[3]>0).reduce((t,h)=>t+h[3],0)}</div><div class="k">earned in the last 2 days</div></div>
+    <div class="stat"><div class="v">${held()}</div><div class="k">held for your requests</div></div>
+  </div>
+  <section class="stage" style="margin-top:24px">
+    <h2>Rewards</h2>
+    <p class="sub">Collect points for tests, homework, decks, games and drills. Ask for a reward and your teacher hands it over in class.</p>
+    <div class="rewards">${REWARDS.filter(r=>r.on).map(r=>{
+      const can = avail>=r.price && r.stock!==0, p = Math.min(100,Math.round(avail/r.price*100));
+      const asked = st.myReq.find(q=>q.rid===r.id && q.state==="wait");
+      return `<div class="rw"><div class="pic" aria-hidden="true">${r.icon}</div><h3>${esc(r.name)}</h3>
+        <div class="price">${pts(r.price)}</div>
+        ${asked?`<span class="pill wait">Asked · waiting for your teacher</span>`:
+          st.ask===r.id?`<div class="confirm">Ask for ${esc(r.name)}? ${r.price} points will be held until your teacher hands it over.<div><button class="btn" data-yes="${r.id}">Yes, ask</button><button class="btn2" data-cancel>Cancel</button></div></div>`:
+          can?`<button class="btn" data-ask="${r.id}">Ask for this</button>`:
+          `<div class="bar" aria-hidden="true"><i style="width:${p}%"></i></div><span class="need">${r.stock===0?"Out of stock":`${r.price-avail} more points`}</span>`}
+      </div>`;}).join("")}</div>
+  </section>
+  ${st.myReq.length?`<section class="stage" style="margin-top:24px"><h2>My requests</h2>
+    <table class="rt"><thead><tr><th>Reward</th><th>Asked</th><th>Points</th><th>Status</th></tr></thead><tbody>
+    ${st.myReq.map(q=>`<tr><td>${esc(rw(q.rid).name)}</td><td class="muted">${q.when}</td><td class="num">${rw(q.rid).price}</td><td>${q.state==="wait"?'<span class="pill wait">Waiting</span>':'<span class="pill ok">Handed over</span>'}</td></tr>`).join("")}
+    </tbody></table></section>`:""}
+  <section class="stage" style="margin-top:24px"><h2>History</h2>
+    <table class="rt"><thead><tr><th>When</th><th>What</th><th></th><th style="text-align:right">Points</th></tr></thead><tbody>
+    ${HISTORY.map(h=>`<tr><td class="muted num">${h[0]}</td><td><span class="tool">${h[1]}</span></td><td>${esc(h[2])}</td><td class="num ${h[3]>0?"plus":"minus"}" style="text-align:right">${h[3]>0?"+":""}${h[3]}</td></tr>`).join("")}
+    </tbody></table></section>`;
+}
+
+/* ---------- teacher ---------- */
+function tabs(){
+  const n = REQUESTS.filter(r=>r.state==="wait").length;
+  return `<div class="seg" role="tablist">${[["requests",`Requests${n?` (${n})`:""}`],["students","Students"],["rewards","Rewards"],["rules","Rules"]].map(([k,v])=>`<button role="tab" data-tab="${k}" aria-pressed="${st.tab===k}">${v}</button>`).join("")}</div>`;
+}
+function teacher(){
+  const body = st.tab==="requests"?tRequests():st.tab==="students"?tStudents():st.tab==="rewards"?tRewards():tRules();
+  return `<div class="abar"><h2 class="title">Points</h2><span class="line"></span>${tabs()}</div><div style="margin-top:24px">${body}</div>`;
+}
+function tRequests(){
+  const wait = REQUESTS.filter(r=>r.state==="wait"), done = REQUESTS.filter(r=>r.state!=="wait");
+  const row = (q,act) => { const s=stu(q.sid), r=rw(q.rid); return `<tr><td><b>${esc(s.name)}</b><div class="muted">${s.cls}</div></td><td>${r.icon} ${esc(r.name)}</td><td class="num">${r.price}</td><td class="muted">${q.when}</td>
+    <td style="text-align:right">${act?`<button class="btn2" data-hand="${q.id}">Handed over</button> <button class="btn2 no" data-decline="${q.id}">Decline</button>`:q.state==="ok"?'<span class="pill ok">Handed over</span>':'<span class="pill no">Declined · points returned</span>'}</td></tr>`; };
+  return `<section class="stage"><h2>Waiting to be handed over</h2>
+    <p class="sub">The points are held when a student asks. "Handed over" spends them; "Decline" gives them back.</p>
+    ${wait.length?`<table class="rt"><thead><tr><th>Student</th><th>Reward</th><th>Points</th><th>Asked</th><th></th></tr></thead><tbody>${wait.map(q=>row(q,true)).join("")}</tbody></table>`:`<p class="muted">No requests waiting.</p>`}
+  </section>
+  ${done.length?`<section class="stage" style="margin-top:24px"><h2>Done</h2><table class="rt"><tbody>${done.map(q=>row(q,false)).join("")}</tbody></table></section>`:""}`;
+}
+function tStudents(){
+  return `<div class="stats">
+    <div class="stat"><div class="v">${STUDENTS.reduce((t,s)=>t+s.d30,0).toLocaleString("en-GB")}</div><div class="k">points earned in the last 30 days</div></div>
+    <div class="stat"><div class="v">${STUDENTS.filter(s=>s.d30>0).length} of ${STUDENTS.length}</div><div class="k">students earning</div></div>
+    <div class="stat"><div class="v">${REQUESTS.filter(r=>r.state==="ok").length}</div><div class="k">rewards handed over</div></div>
+  </div>
+  <section class="stage" style="margin-top:24px"><h2>Students</h2>
+  <table class="rt"><thead><tr><th>Student</th><th>Class</th><th>Balance</th><th>Last 30 days</th><th>Last earned</th><th></th></tr></thead><tbody>
+  ${STUDENTS.map(s=>`<tr><td><button class="lnk" data-open="${s.id}">${esc(s.name)}</button></td><td class="muted">${s.cls}</td><td class="num"><b>${s.bal}</b></td><td class="num">+${s.d30}</td><td class="muted">${s.last}</td><td style="text-align:right"><button class="btn2" data-open="${s.id}">Give or take points</button></td></tr>
+    ${st.open===s.id?`<tr><td colspan="6"><div class="adjust"><label class="sr" for="adj">Points</label><input id="adj" class="inp n" type="number" placeholder="+20"><label class="sr" for="why">Reason</label><input id="why" class="inp" style="flex:1;min-width:240px" placeholder="Reason the student will see, e.g. Great speaking in class"><button class="btn" data-save="${s.id}">Save</button><button class="btn2" data-close>Cancel</button></div></td></tr>`:""}`).join("")}
+  </tbody></table>
+  <p class="note">Use a minus number to take points away (e.g. −20). The student sees the reason in their history. Each student's full history opens from their name.</p>
+  </section>`;
+}
+function tRewards(){
+  return `<section class="stage"><div style="display:flex;align-items:center;gap:12px"><h2>Rewards</h2><span style="flex:1"></span><button class="btn" data-add>Add reward</button></div>
+  <table class="rt"><thead><tr><th>Reward</th><th>Price (points)</th><th>In stock</th><th>Shown to students</th></tr></thead><tbody>
+  ${REWARDS.map(r=>`<tr><td><input class="inp" value="${esc(r.icon+" "+r.name)}" aria-label="Name"></td><td><input class="inp n" type="number" value="${r.price}" aria-label="Price"></td>
+    <td><input class="inp n" type="number" value="${r.stock??""}" placeholder="∞" aria-label="Stock"></td>
+    <td><label class="toggle"><input type="checkbox" ${r.on?"checked":""} data-on="${r.id}"> ${r.on?"Shown":"Hidden"}</label></td></tr>`).join("")}
+  </tbody></table>
+  <p class="note">Leave stock empty for no limit (e.g. private lessons). Stock goes down when you press "Handed over". A reward with 0 left shows "Out of stock".</p></section>`;
+}
+function tRules(){
+  return `<section class="stage"><h2>How students earn points</h2>
+  <p class="sub">Points are added automatically when a result reaches TBT Results. These are starting numbers; change any of them.</p>
+  <table class="rt"><thead><tr><th>Activity</th><th>Points for finishing</th><th>Note</th></tr></thead><tbody>
+  ${Object.entries(RULES.tools).map(([k,v])=>`<tr><td><span class="tool">${TOOLS[k]}</span></td><td><input class="inp n" type="number" value="${v}" aria-label="${TOOLS[k]} points"></td>
+    <td class="muted">${k==="homework"?"When you save a score":k==="fill"?"Game points stay in Fill; finishing earns these":["swipe","matching","drill"].includes(k)?"Done, no score":"Gets the score bonus too"}</td></tr>`).join("")}
+  </tbody></table>
+  <table class="rt"><tbody>
+    <tr><td>Score bonus</td><td class="num"><input class="inp n" type="number" value="${RULES.bonus}" aria-label="Bonus"> points at <input class="inp n" type="number" value="${RULES.bonusAt}" aria-label="Bonus threshold"> % or more</td><td class="muted">Tests, Drag &amp; Drop, Homework</td></tr>
+    <tr><td>Doing the same activity again</td><td><input class="inp n" type="number" value="${RULES.repeat}" aria-label="Repeat points"> points</td><td class="muted">Once a day per activity; first time earns full points</td></tr>
+    <tr><td>First activity of the day</td><td><input class="inp n" type="number" value="${RULES.activeDay}" aria-label="Active day bonus"> points</td><td class="muted">Rewards coming back every day (instead of counting logins)</td></tr>
+    <tr><td>Daily limit</td><td><input class="inp n" type="number" value="${RULES.dailyCap}" aria-label="Daily limit"> points a day</td><td class="muted">Your own awards don't count towards it</td></tr>
+    <tr><td>Points start on</td><td><input class="inp" style="width:170px" type="date" value="${RULES.start}" aria-label="Start date"></td><td class="muted">Work finished before this date earns nothing</td></tr>
+  </tbody></table>
+  <div><button class="btn">Save rules</button></div></section>`;
+}
+
+function render(){ $("#app").innerHTML = st.mode==="student" ? student() : teacher(); }
+document.addEventListener("click", e=>{
+  const t = e.target.closest("button,input[type=checkbox]"); if(!t) return;
+  const d = t.dataset;
+  if (d.mode){ st.mode=d.mode; document.querySelectorAll("[data-mode]").forEach(b=>b.setAttribute("aria-pressed", b===t)); }
+  else if (d.tab) st.tab=d.tab;
+  else if (d.ask) st.ask=+d.ask;
+  else if ("cancel" in d) st.ask=null;
+  else if (d.yes){ st.myReq.unshift({rid:+d.yes,state:"wait",when:"Just now"}); REQUESTS.unshift({id:Date.now(),sid:4,rid:+d.yes,when:"Just now",state:"wait"}); st.ask=null; }
+  else if (d.hand){ const q=REQUESTS.find(r=>r.id==d.hand); q.state="ok"; const r=rw(q.rid); if(r.stock) r.stock--; stu(q.sid).bal-=r.price; }
+  else if (d.decline){ REQUESTS.find(r=>r.id==d.decline).state="no"; }
+  else if (d.open) st.open = st.open===+d.open ? null : +d.open;
+  else if ("close" in d) st.open=null;
+  else if (d.save){ const n=parseInt($("#adj").value,10); if(n){ stu(+d.save).bal+=n; } st.open=null; }
+  else if (d.on){ const r=rw(+d.on); r.on=t.checked; }
+  else return;
+  render();
+});
+render();
+</script>
