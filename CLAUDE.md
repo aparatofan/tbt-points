@@ -5,7 +5,7 @@ Keep this file concise. It is loaded at the start of every Claude Code session.
 ## Start here
 
 - Work from the task, not from a full-repository scan.
-- The current release is specified in `docs/SPEC-0.1.1.md`. Follow it in order. Phase 0 is read-only and ends with a report; do not edit anything before Mariusz answers it.
+- The current release is specified in `docs/SPEC-0.1.2.md`. Follow it in order. Phase 0 is read-only and ends with a report; do not edit anything before Mariusz answers it.
 - `docs/prototypes/*.html` are the approved designs. Where the spec and a prototype disagree, the spec wins; where the spec is silent, the prototype decides.
 - Sibling code is the reference for patterns: `aparatofan/tbt-results` (access rules, assets, tokens, fonts, REST boot, deploy) and `aparatofan/tbt_notes` (the `tbt_notes_activity_recorded` action and access helpers).
 - Do not change unrelated code, formatting, wording, or styling.

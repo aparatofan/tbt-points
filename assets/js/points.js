@@ -24,13 +24,14 @@
 	var MODE = CFG.mode === 'teacher' ? 'teacher' : 'student';
 	var IS_ADMIN = !! CFG.isAdmin;
 	var P = { tab: 'tbtp_tab', student: 'tbtp_student', q: 'tbtp_q' };
-	var TOOL_ORDER = [ 'test', 'homework', 'swipe', 'matching', 'dragdrop', 'drill', 'fill' ];
+	var TOOL_ORDER = [ 'test', 'homework', 'swipe', 'matching', 'dragdrop', 'drill', 'fill', 'lesson' ];
 	var TOOL_NOTES = {
 		homework: 'When you save a score',
 		fill: 'Game points stay in Fill; finishing earns these',
 		swipe: 'Done, no score',
 		matching: 'Done, no score',
 		drill: 'Done, no score',
+		lesson: 'Added to Learning History; once per lesson',
 		test: 'Gets the score bonus too',
 		dragdrop: 'Gets the score bonus too',
 	};

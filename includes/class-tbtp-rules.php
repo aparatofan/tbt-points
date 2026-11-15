@@ -38,6 +38,7 @@ class TBTP_Rules {
 			'dragdrop' => 'Drag & Drop',
 			'drill'    => 'Translation Drill',
 			'fill'     => 'Fill',
+			'lesson'   => 'Lesson',
 		);
 	}
 
@@ -68,6 +69,7 @@ class TBTP_Rules {
 				'dragdrop' => 5,
 				'drill'    => 5,
 				'fill'     => 5,
+				'lesson'   => 5,
 			),
 			'unknown'   => 5,
 			'bonus'     => 5,
