@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       TBT Points
  * Description:       Students earn points for the work they finish on The Blue Tree. Listens to the TBT Notes activity log.
- * Version:           0.1.2
+ * Version:           0.1.3
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Author:            The Blue Tree
@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'TBTP_VERSION', '0.1.2' );
+define( 'TBTP_VERSION', '0.1.3' );
 define( 'TBTP_DB_VERSION', '1' );
 define( 'TBTP_FILE', __FILE__ );
 define( 'TBTP_DIR', plugin_dir_path( __FILE__ ) );
@@ -51,6 +51,25 @@ function tbtp_register_hub_item( $items ) {
 	return $items;
 }
 add_filter( 'tbt_hub_items', 'tbtp_register_hub_item' );
+
+/**
+ * Points one Notes activity row earned: its `earn` or `repeat` row plus the
+ * day bonus, if any. Read-only. Since 0.1.3.
+ *
+ * Earning runs synchronously inside tbt_notes_record_activity(), so a caller
+ * can ask right after that call returns. TBT Poll calls this through
+ * function_exists() to tell a student what a vote earned.
+ *
+ * @param int $activity_id Notes activity row ID.
+ * @return int Never throws; 0 on any failure.
+ */
+function tbtp_points_for_activity( $activity_id ) {
+	try {
+		return TBTP_DB::points_for_activity( $activity_id );
+	} catch ( \Throwable $e ) {
+		return 0;
+	}
+}
 
 // Notes loads on its own schedule, so readiness is checked when used, never
 // here: without Notes the shortcodes print one line, the routes answer 503

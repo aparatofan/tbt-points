@@ -154,6 +154,29 @@ class TBTP_DB {
 	}
 
 	/**
+	 * Points earned by one Notes activity row: every row of an earned kind
+	 * that carries its activity_id. 0 when there are none or no table.
+	 *
+	 * @param int $activity_id Notes activity row ID.
+	 * @return int
+	 */
+	public static function points_for_activity( $activity_id ) {
+		global $wpdb;
+		$activity_id = (int) $activity_id;
+		if ( $activity_id <= 0 || ! self::table_exists() ) {
+			return 0;
+		}
+		$table = self::table();
+		$kinds = self::EARNED_KINDS;
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(points), 0) FROM {$table} WHERE activity_id = %d AND " . self::kinds_sql( $kinds ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				array_merge( array( $activity_id ), $kinds )
+			)
+		);
+	}
+
+	/**
 	 * Is there a row of one of these kinds for user + tool + object_ref,
 	 * optionally within [from, to) UTC?
 	 *
