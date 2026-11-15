@@ -39,6 +39,7 @@ class TBTP_Rules {
 			'drill'    => 'Translation Drill',
 			'fill'     => 'Fill',
 			'lesson'   => 'Lesson',
+			'poll'     => 'Poll',
 		);
 	}
 
@@ -70,6 +71,7 @@ class TBTP_Rules {
 				'drill'    => 5,
 				'fill'     => 5,
 				'lesson'   => 5,
+				'poll'     => 3,
 			),
 			'unknown'   => 5,
 			'bonus'     => 5,
