@@ -53,6 +53,8 @@ check( 'unscored tool (swipe): no bonus', award( array( 'tool' => 'swipe', 'perc
 check( 'unknown tool: unknown points', award( array( 'tool' => 'quiz', 'percent' => null ) ), out( 5, 2 ) );
 check( 'unknown tool with its own number', award( array( 'tool' => 'quiz' ), array( 'unknown' => 7 ) ), out( 7, 2 ) );
 check( 'fill: score without max is no percent, no bonus', award( array( 'tool' => 'fill', 'percent' => null ) ), out( 5, 2 ) );
+check( 'lesson (Learning History): its own rule', award( array( 'tool' => 'lesson' ), array( 'tools' => array( 'lesson' => 2 ) ) ), out( 2, 2 ) );
+check( 'lesson: no score, no bonus', award( array( 'tool' => 'lesson', 'percent' => null ) ), out( 5, 2 ) );
 check( 'changed rule: swipe 3', award( array( 'tool' => 'swipe' ), array( 'tools' => array( 'swipe' => 3 ) ) ), out( 3, 2 ) );
 check( '0 % is a real result, still no bonus', award( array( 'tool' => 'test', 'percent' => 0 ) ), out( 10, 2 ) );
 
@@ -93,6 +95,11 @@ check( 'a tool below 0 is refused', array_keys( $v['errors'] ), array( 'tools.sw
 
 $v = TBTP_Rules::validate( array_replace( $good, array( 'day' => '3', 'bonus_at' => '100' ) ) );
 check( 'digit strings accepted', array( $v['errors'], $v['rules']['day'], $v['rules']['bonus_at'] ), array( array(), 3, 100 ) );
+
+/* Rules saved before 0.1.2 have no `lesson`: it falls back to the default
+   and every saved number is kept. */
+$old = TBTP_Rules::merge( array( 'tools' => array( 'swipe' => 3, 'test' => 12 ), 'start' => '2026-11-14' ) );
+check( 'old saved rules: lesson gets the default, others kept', array( $old['tools']['lesson'], $old['tools']['swipe'], $old['tools']['test'] ), array( 5, 3, 12 ) );
 
 /* ---------- Day bounds ---------- */
 
