@@ -24,7 +24,7 @@
 	var MODE = CFG.mode === 'teacher' ? 'teacher' : 'student';
 	var IS_ADMIN = !! CFG.isAdmin;
 	var P = { tab: 'tbtp_tab', student: 'tbtp_student', q: 'tbtp_q' };
-	var TOOL_ORDER = [ 'test', 'homework', 'swipe', 'matching', 'dragdrop', 'drill', 'fill', 'lesson', 'poll', 'dictionary_word' ];
+	var TOOL_ORDER = [ 'test', 'homework', 'swipe', 'matching', 'dragdrop', 'drill', 'fill', 'lesson', 'poll', 'dictionary', 'dictionary_word' ];
 	var TOOL_NOTES = {
 		homework: 'When you save a score',
 		fill: 'Game points stay in Fill; finishing earns these',
@@ -35,6 +35,7 @@
 		poll: 'When a student votes; once per poll',
 		test: 'Gets the score bonus too',
 		dragdrop: 'Gets the score bonus too',
+		dictionary: 'A finished game round in My dictionary',
 		dictionary_word: 'Each new word in My dictionary; once per word',
 	};
 

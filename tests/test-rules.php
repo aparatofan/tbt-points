@@ -115,6 +115,18 @@ check( 'dictionary_word: changed rule', award( array( 'tool' => 'dictionary_word
 check( 'dictionary_word: no score, no bonus', award( array( 'tool' => 'dictionary_word', 'percent' => null, 'day_given' => true ) ), out( 1, 0 ) );
 check( 'dictionary_word label', TBTP_Rules::tool_label( 'dictionary_word' ), 'Dictionary: new word' );
 
+/* Dictionary games (0.1.5): their own rule, plus the bonus at 80 %. */
+check( 'dictionary: its own rule (default 5)', award( array( 'tool' => 'dictionary', 'percent' => 79 ) ), out( 5, 2 ) );
+check( 'dictionary: 4 / 5 (80 %) gets the bonus', award( array( 'tool' => 'dictionary', 'percent' => 80 ) ), out( 10, 2 ) );
+check( 'dictionary: changed rule', award( array( 'tool' => 'dictionary', 'percent' => 50 ), array( 'tools' => array( 'dictionary' => 7 ) ) ), out( 7, 2 ) );
+check( 'dictionary: same groups again is a repeat', award( array( 'tool' => 'dictionary', 'percent' => 100, 'is_first' => false, 'day_given' => true ) ), out( 1, 0, 'again' ) );
+check( 'dictionary label', TBTP_Rules::tool_label( 'dictionary' ), 'Dictionary game' );
+
+/* Rules saved before 0.1.5 have no `dictionary`: it gets the default (5)
+   and every saved number is kept. */
+$old = TBTP_Rules::merge( array( 'tools' => array( 'swipe' => 3, 'poll' => 4, 'dictionary_word' => 2 ), 'start' => '2026-11-14' ) );
+check( 'old saved rules: dictionary gets the default, others kept', array( $old['tools']['dictionary'], $old['tools']['dictionary_word'], $old['tools']['poll'], $old['tools']['swipe'] ), array( 5, 2, 4, 3 ) );
+
 /* Direct events (tbt_points_record_event()): once ever, no score bonus. */
 function direct( array $in, array $rules = array() ) {
 	$base = array(
