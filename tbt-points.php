@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       TBT Points
  * Description:       Students earn points for the work they finish on The Blue Tree. Listens to the TBT Notes activity log.
- * Version:           0.1.3
+ * Version:           0.1.4
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Author:            The Blue Tree
@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'TBTP_VERSION', '0.1.3' );
+define( 'TBTP_VERSION', '0.1.4' );
 define( 'TBTP_DB_VERSION', '1' );
 define( 'TBTP_FILE', __FILE__ );
 define( 'TBTP_DIR', plugin_dir_path( __FILE__ ) );
@@ -66,6 +66,28 @@ add_filter( 'tbt_hub_items', 'tbtp_register_hub_item' );
 function tbtp_points_for_activity( $activity_id ) {
 	try {
 		return TBTP_DB::points_for_activity( $activity_id );
+	} catch ( \Throwable $e ) {
+		return 0;
+	}
+}
+
+/**
+ * Earn for an event that is not a Notes activity (e.g. a Dictionary word).
+ * Trusted PHP callers only: never pass a user_id taken from a browser.
+ * Since 0.1.4.
+ *
+ * Same rules as a Notes row with no score (no score bonus), once per
+ * user_id, tool and object_ref ever: no repeat points. Ledger rows have a
+ * NULL activity_id. Never throws; 0 when Points is not ready (no table,
+ * Notes missing or older than 1.22.0, before the start date) or nothing
+ * was earned.
+ *
+ * @param array $args user_id, tool, object_ref (required); object_title.
+ * @return int Points added (earn + day bonus), 0 when nothing was earned.
+ */
+function tbt_points_record_event( array $args ): int {
+	try {
+		return (int) TBTP_Earn::record_event( $args );
 	} catch ( \Throwable $e ) {
 		return 0;
 	}
