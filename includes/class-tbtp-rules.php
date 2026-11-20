@@ -3,7 +3,7 @@
  * The earning rules: stored in the `tbtp_rules` option, and the pure award
  * calculation.
  *
- * defaults(), validate(), award(), day_bounds() and tool_label() use no
+ * defaults(), validate(), award(), award_direct(), day_bounds() and tool_label() use no
  * WordPress, so tests/test-rules.php runs them with plain PHP. get(), save()
  * and ensure_start() are the only methods that touch the option.
  */
@@ -228,6 +228,28 @@ class TBTP_Rules {
 			'earn_detail' => $detail,
 			'day'         => $day,
 		);
+	}
+
+	/**
+	 * How many points one direct event earns (tbt_points_record_event()).
+	 * Pure. The same rules as a Notes row with no score, but once ever: an
+	 * event that has earned before (is_first false) earns nothing at all,
+	 * not repeat points and not the day bonus.
+	 *
+	 * @param array $rules Rules, as get().
+	 * @param array $in    As award(); percent is ignored.
+	 * @return array{earn:int,earn_detail:string,day:int}
+	 */
+	public static function award_direct( array $rules, array $in ) {
+		if ( empty( $in['is_first'] ) ) {
+			return array(
+				'earn'        => 0,
+				'earn_detail' => '',
+				'day'         => 0,
+			);
+		}
+		$in['percent'] = null;
+		return self::award( $rules, $in );
 	}
 
 	/**

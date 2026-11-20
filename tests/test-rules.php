@@ -115,6 +115,27 @@ check( 'dictionary_word: changed rule', award( array( 'tool' => 'dictionary_word
 check( 'dictionary_word: no score, no bonus', award( array( 'tool' => 'dictionary_word', 'percent' => null, 'day_given' => true ) ), out( 1, 0 ) );
 check( 'dictionary_word label', TBTP_Rules::tool_label( 'dictionary_word' ), 'Dictionary: new word' );
 
+/* Direct events (tbt_points_record_event()): once ever, no score bonus. */
+function direct( array $in, array $rules = array() ) {
+	$base = array(
+		'tool'         => 'dictionary_word',
+		'percent'      => null,
+		'is_first'     => true,
+		'repeat_today' => false,
+		'day_given'    => false,
+		'earned_today' => 0,
+	);
+	return TBTP_Rules::award_direct( array_replace_recursive( TBTP_Rules::defaults(), $rules ), array_replace( $base, $in ) );
+}
+check( 'direct: first time earns the rule plus the day bonus', direct( array() ), out( 1, 2 ) );
+check( 'direct: day bonus already given', direct( array( 'day_given' => true ) ), out( 1, 0 ) );
+check( 'direct: a percent never adds the score bonus', direct( array( 'percent' => 100 ) ), out( 1, 2 ) );
+check( 'direct: earned before → nothing, no repeat', direct( array( 'is_first' => false ) ), out( 0, 0 ) );
+check( 'direct: earned before, repeat not yet today → still nothing', direct( array( 'is_first' => false, 'repeat_today' => false, 'day_given' => false ) ), out( 0, 0 ) );
+check( 'direct: daily cap applies', direct( array( 'earned_today' => 50 ) ), out( 0, 0 ) );
+check( 'direct: cap leaves room for the word only', direct( array( 'earned_today' => 49 ) ), out( 1, 0 ) );
+check( 'direct: unknown tool uses the unknown rate', direct( array( 'tool' => 'something_new' ) ), out( 5, 2 ) );
+
 /* Rules saved before 0.1.4 have no `dictionary_word`: it gets the default (1)
    and every saved number is kept. */
 $old = TBTP_Rules::merge( array( 'tools' => array( 'swipe' => 3, 'test' => 12, 'lesson' => 2, 'poll' => 4 ), 'unknown' => 7, 'start' => '2026-11-14' ) );

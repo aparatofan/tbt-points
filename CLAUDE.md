@@ -20,7 +20,7 @@ Keep this file concise. It is loaded at the start of every Claude Code session.
 ## Architecture to preserve
 
 - **Points owns one table, the ledger** (`{prefix}tbtp_ledger`). Balance is always `SUM(points)`; no cached balance. Rows are never edited or deleted: a correction is a new row.
-- **Earning listens to Notes' `tbt_notes_activity_recorded` action.** It never reads or writes Notes' activity table for earning, and it never throws: a failure is swallowed so a student's request in Notes is never broken.
+- **Earning listens to Notes' `tbt_notes_activity_recorded` action, plus `tbt_points_record_event()` for trusted plugins whose events are not finished work (TBT Dictionary words).** Both use the same award path. Neither reads or writes Notes' activity table, and neither throws.
 - **The award calculation is one pure function** (`TBTP_Rules::award()`), unit-tested. Change the tests with the rules.
 - The unique key `(activity_id, kind)` guarantees an activity earns once.
 - **Visibility as TBT Results:** admins see every student, teachers their own classes' students, students only themselves. Rules are admin-only. Enforced in REST, never only in the UI.
