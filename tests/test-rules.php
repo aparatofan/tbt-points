@@ -109,6 +109,17 @@ check( 'old saved rules: lesson gets the default, others kept', array( $old['too
 $old = TBTP_Rules::merge( array( 'tools' => array( 'swipe' => 3, 'test' => 12, 'lesson' => 2 ), 'start' => '2026-11-14' ) );
 check( 'old saved rules: poll gets the default, others kept', array( $old['tools']['poll'], $old['tools']['lesson'], $old['tools']['swipe'], $old['tools']['test'] ), array( 3, 2, 3, 12 ) );
 
+/* Dictionary words (0.1.4): their own rule, no score so no bonus. */
+check( 'dictionary_word: its own rule (default 1)', award( array( 'tool' => 'dictionary_word' ) ), out( 1, 2 ) );
+check( 'dictionary_word: changed rule', award( array( 'tool' => 'dictionary_word' ), array( 'tools' => array( 'dictionary_word' => 2 ) ) ), out( 2, 2 ) );
+check( 'dictionary_word: no score, no bonus', award( array( 'tool' => 'dictionary_word', 'percent' => null, 'day_given' => true ) ), out( 1, 0 ) );
+check( 'dictionary_word label', TBTP_Rules::tool_label( 'dictionary_word' ), 'Dictionary: new word' );
+
+/* Rules saved before 0.1.4 have no `dictionary_word`: it gets the default (1)
+   and every saved number is kept. */
+$old = TBTP_Rules::merge( array( 'tools' => array( 'swipe' => 3, 'test' => 12, 'lesson' => 2, 'poll' => 4 ), 'unknown' => 7, 'start' => '2026-11-14' ) );
+check( 'old saved rules: dictionary_word gets the default, others kept', array( $old['tools']['dictionary_word'], $old['tools']['poll'], $old['tools']['lesson'], $old['tools']['swipe'], $old['tools']['test'], $old['unknown'] ), array( 1, 4, 2, 3, 12, 7 ) );
+
 /* ---------- Day bounds ---------- */
 
 $waw = new DateTimeZone( 'Europe/Warsaw' );

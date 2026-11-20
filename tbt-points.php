@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       TBT Points
  * Description:       Students earn points for the work they finish on The Blue Tree. Listens to the TBT Notes activity log.
- * Version:           0.1.3
+ * Version:           0.1.4
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Author:            The Blue Tree
@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'TBTP_VERSION', '0.1.3' );
+define( 'TBTP_VERSION', '0.1.4' );
 define( 'TBTP_DB_VERSION', '1' );
 define( 'TBTP_FILE', __FILE__ );
 define( 'TBTP_DIR', plugin_dir_path( __FILE__ ) );

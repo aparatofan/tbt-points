@@ -40,6 +40,7 @@ class TBTP_Rules {
 			'fill'     => 'Fill',
 			'lesson'   => 'Lesson',
 			'poll'     => 'Poll',
+			'dictionary_word' => 'Dictionary: new word',
 		);
 	}
 
@@ -72,6 +73,7 @@ class TBTP_Rules {
 				'fill'     => 5,
 				'lesson'   => 5,
 				'poll'     => 3,
+				'dictionary_word' => 1,
 			),
 			'unknown'   => 5,
 			'bonus'     => 5,
